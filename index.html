@@ -31,13 +31,12 @@
 
  void main() {    // YOU MUST DEFINE main()
 
-    // HERE YOU CAN WRITE ANY CODE TO
-    // DEFINE A COLOR FOR THIS FRAGMENT
+    // HERE YOU CAN WRITE ANY CODE TO DEFINE A COLOR FOR THIS FRAGMENT
+
 
     float red = vPos.y+asin(vPos.x)+sin(3.0)+cos(vPos.y);
     float green = (sin(vPos.y+uTime+red*32.0));
-    float blue  = cos(sin(6. * uTime))+green+sin(vPos.y);
-
+    float blue  = cos(sin(6.0 * uTime))+green+sin(vPos.y);
     // R,G,B EACH RANGE FROM 0.0 TO 1.0
 
     vec3 color = vec3(red, green+red, blue);
