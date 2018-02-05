@@ -34,13 +34,13 @@
     // HERE YOU CAN WRITE ANY CODE TO
     // DEFINE A COLOR FOR THIS FRAGMENT
 
-    float red   = vPos.x;
-    float green = vPos.y;
-    float blue  = sin(5. * uTime);
+    float red = vPos.y+asin(vPos.x)+sin(3.0)+cos(vPos.y);
+    float green = (sin(vPos.y+uTime+red*32.0));
+    float blue  = cos(sin(6. * uTime))+green+sin(vPos.y);
 
     // R,G,B EACH RANGE FROM 0.0 TO 1.0
 
-    vec3 color = vec3(red, green, blue);
+    vec3 color = vec3(red, green+red, blue);
 
     // THIS LINE OUTPUTS THE FRAGMENT COLOR
 
@@ -51,25 +51,17 @@
 <!!-------- CREATE A PROPERLY DESCRIPTIVE TITLE BELOW -------->
 
 <script id='my_title' type='text/html'>
-HERE YOU CAN GIVE YOUR ASSIGNMENT A TITLE
+Homework Assignment 1- Stephanie McAleer
 </script>
 
 
 <!!-------- HERE IS WHERE YOU CAN PROVIDE A LONGER TEXT DESCRIPTION -------->
 
 <script id='my_instructions' type='text/html'><font color=#b0b0b0>
-And here you can write a description<br>
-in HTML format of what your program<br>
-is doing, and why you wrote it.
-<p>
-<i>For example:</i>
-<p>
-This is a really simple fragment shader<br>
-program I wrote so the students in my<br>
-computer graphics class can see how<br>
-<code>uTime</code> and <code>vPos</code> can be the inputs for<br>
-a fragment shader, and <code>gl_FragColor</code><br>
-is the output.
+This is the fragment shader<br>
+that I edited with a lot of cos and sin<br>
+functions for fun to make these interesting<br>
+and calming rotating lines.
 </script>
 
 
