@@ -86,6 +86,7 @@ vec3 sph(float x, float y) {
 }
 
 void main() {
+   //original sphere
    //vec3 N = sph(2.*vPos.x, 2.*vPos.y);
    vec3 N = shader();
    vec3 L = vec3(.5*sin(5.*uTime),1.,1.);
