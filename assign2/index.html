@@ -1,0 +1,159 @@
+<script src=lib1.js></script>
+
+<body bgcolor=black text=white link=white alink=white vlink=white>
+<center>
+<canvas id='canvas1' width=400 height=400></canvas>
+</center>
+</body>
+
+
+<!!-------- VERTEX SHADER: YOU PROBABLY DON'T WANT TO CHANGE THIS RIGHT NOW -------->
+
+<script id='my_vertex_shader' type='x-shader/x-vertex'>
+   attribute vec3 aPos;
+   varying   vec3 vPos;
+   void main() {
+      gl_Position = vec4(aPos, 1.);
+      vPos = aPos;
+   }
+</script>
+
+
+<!!-------- FRAGMENT SHADER: THIS IS WHERE YOU WILL DO YOUR WORK -------->
+
+<script id='my_fragment_shader' type='x-shader/x-fragment'>
+
+ uniform float uTime;   // TIME, IN SECONDS
+
+ varying vec3 vPos;     // -1 < vPos.x < +1
+                        // -1 < vPos.y < +1
+                        //      vPos.z == 0
+vec3 shader() {
+     vec3 N;
+     float f = 7.;
+     float r = 0.6;
+     vec3 V = vec3(0.0, 0.0, f);
+     vec3 W = normalize(vec3(vPos.x, vPos.y, -f));
+     vec3 C = vec3(0.0,0.0,0.0);
+     vec3 P = V - C;
+
+  float tfinal = 0.0;
+
+  float sqrtCheck = sqrt(pow(dot(W,P),2.) - dot(P,P) + pow(r,2.));
+  if (sqrtCheck == 0.0) {
+    float t1 = -dot(W,P);
+    tfinal = t1;
+  }
+  else if (sqrtCheck > 0.0) {
+    float t2 = -dot(W,P) + sqrtCheck;
+    float t3 = -dot(W,P) - sqrtCheck;
+    if (t2>0.0 && t3>0.0) {
+      tfinal = min(t2,t3);
+    }
+    else {
+        if (t2 >0.0) {
+          tfinal = t2;
+        }
+        else {
+          tfinal = t3;
+        }
+    }
+  }
+  else {
+    N = vec3(0.0,0.0,0.0);
+    return N;
+  }
+
+    //find intersection point S on surface by plugging in t
+    vec3 S = V + tfinal * W;
+    //can find normalized vector from center of sphere
+    //to this point
+    N = normalize(S - C);
+
+
+  return N;
+}
+
+
+//uniform float uTime;
+//varying vec3 vPos;
+
+vec3 sph(float x, float y) {
+   float zz = 1. - x * x - y * y;
+   float sign = step(0., zz);
+   float z = mix(-1., sqrt(zz), sign);
+   return vec3(x, y, z);
+}
+
+void main() {
+   //vec3 N = sph(2.*vPos.x, 2.*vPos.y);
+   vec3 N = shader();
+   vec3 L = vec3(.5*sin(5.*uTime),1.,1.);
+   float c = max(.1, dot(N, normalize(L)));
+   c = step(0., N.z) * .5 * c;
+   vec3 color = vec3(c, c*c, c*c*c);
+   gl_FragColor = vec4(sqrt(color), 1.0);
+}
+ }</script>
+
+
+<!!-------- CREATE A PROPERLY DESCRIPTIVE TITLE BELOW -------->
+
+<script id='my_title' type='text/html'>
+Homework Assignment 2- Stephanie McAleer
+</script>
+
+
+<!!-------- HERE IS WHERE YOU CAN PROVIDE A LONGER TEXT DESCRIPTION -------->
+
+<script id='my_instructions' type='text/html'><font color=#b0b0b0>
+This is my simple shader program<br>
+try changing f and r!
+</script>
+
+
+<!!-------- YOU PROBABLY DON'T WANT TO CHANGE ANYTHING BELOW FOR NOW -------->
+
+<script>
+var vs = my_vertex_shader.innerHTML,
+    fs = my_fragment_shader.innerHTML;
+    fs = fs.substring(1, fs.length);
+
+document.body.innerHTML = [''
+   ,'<center><font size=6 color=#b0b0b0>' + my_title.innerHTML + '</center>'
+   ,'<TABLE cellspacing=0 cellpadding=0><TR>'
+   ,'<td width=50></td><td><font color=red size=5><div id=errorMessage>&nbsp;</div></font></td>'
+   ,'</TR><TR>'
+   ,'<table cellspacing=10>'
+   ,'<tr>'
+   ,'<td valign=top><font size=2 color=red><div id=errorMarker>&nbsp;</div></font></td>'
+   ,'<td valign=top>'
+   ,'<textArea id=textArea spellcheck=false '
+   ,'style="font:16px courier;outline-width:0;border-style:none;resize:none;overflow:scroll;"'
+   ,'></textArea>'
+   ,'</td><td valign=top>' + document.body.innerHTML + '</td>'
+   ,'<td valign=top><font size=5>' + my_instructions.innerHTML + '</td>'
+   ,'</tr></table>'
+   ,'</TR></TABLE>'
+   ].join('');
+
+var i, text = fs.split('\n'), cols = 0;
+for (i = 0 ; i < text.length ; i++)
+   cols = Math.max(cols, text[i].length);
+
+textArea.rows = text.length;
+textArea.cols = cols;
+textArea.value = fs;
+textArea.style.backgroundColor = '#202020';
+textArea.style.color = 'white';
+textArea.onkeyup = function() { canvas1.setShaders(vs, this.value); }
+
+var startTime = Date.now();
+
+function animate(gl) {
+   let time = (Date.now() - startTime) / 1000;
+   setUniform('1f', 'uTime', time);
+}
+
+gl_start(canvas1, vs, fs);
+</script>
