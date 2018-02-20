@@ -18,6 +18,9 @@
 <script id='my_fragment_shader' type='x-shader/x-fragment'>
 uniform float uTime;
 varying vec3 vPos;
+uniform vec4 uS[2];
+uniform vec4 uL[2];
+
 
 vec3 sph(float x, float y) {
    float zz = 1. - x * x - y * y;
@@ -73,11 +76,10 @@ vec3 shader() {
   return N;
 }
 
-float phong() {
-   vec3 N = shader();
+float phong(vec3 N) {
+   //float z = N.z;
    vec3 L = vec3(.5*sin(5.*uTime),1.,1.);
    float c = max(.1, dot(N, normalize(L)));
-   //vec3 W = (vPos.x, vPos.y, -f);
    vec3 E = -W;
    //implementing R
    vec3 R = 2. * dot(N,L) * N - L;
@@ -85,15 +87,30 @@ float phong() {
    float spec = pow(max(0., dot(E, R)),p);
    c = step(0.1, N.z) * .5 * c;
    c+= spec;
-   //c = step(, N.z) * .5 * c;
    return c;
 }
 
 void main() {
+   vec3 N = shader();
 
-   float c = phong();
-
+   float c = phong(N);
    vec3 color = vec3(c, c*c, c*c*c);
+
+   float z = -1000.;
+   for (int n = 0; n<2; n++) {
+      vec4 S = uS[n];
+      if (N.z>z) {
+         for (int i = 0; i< 2; i++) {
+            vec4 L = uL[i];
+
+            c+= max(0.,L.w * dot(N, normalize(L.xyz)));
+            //color = c * vec3(1.,1.,1.);
+            z = N.z;
+         }
+      }
+   }
+
+
    gl_FragColor = vec4(sqrt(color), 0.0);
 }</script>
 
