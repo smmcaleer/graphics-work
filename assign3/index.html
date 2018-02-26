@@ -29,99 +29,136 @@ vec3 sph(float x, float y) {
    return vec3(x, y, z);
 }
 
-vec3 W;
+//vec3 W;
 
-vec3 shader() {
-     vec3 N;
-     float f = 8.;
-     float r = 0.6;
-     vec3 V = vec3(0.0, 0.0, f);
-     W = normalize(vec3(vPos.x, vPos.y, -f));
-     vec3 C = vec3(0.0,0.0,0.0);
+//sph(v,w,c,r)
+float shader(vec3 V, vec3 W, vec3 C, float r) {
+//vec3 shader() {
+     //vec3 N;
+     //float f = 1.;
+     //float r = 0.6;
+     //vec3 V = vec3(0.0, 0.0, f);
+     //W = normalize(vec3(vPos.x, vPos.y, -f));
+     //vec3 C = vec3(0.0,0.0,0.0);
      vec3 P = V - C;
 
   float tfinal = 0.0;
 
-  float sqrtCheck = sqrt(pow(dot(W,P),2.) - dot(P,P) + pow(r,2.));
+  float sqrtCheck = (pow(dot(W,P),2.) - dot(P,P) + pow(r,2.));
   if (sqrtCheck == 0.0) {
     float t1 = -dot(W,P);
     tfinal = t1;
   }
   else if (sqrtCheck > 0.0) {
-    float t2 = -dot(W,P) + sqrtCheck;
-    float t3 = -dot(W,P) - sqrtCheck;
+    float t2 = -dot(W,P) + sqrt(sqrtCheck);
+    float t3 = -dot(W,P) - sqrt(sqrtCheck);
     if (t2>0.0 && t3>0.0) {
-      tfinal = min(t2,t3);
+     // tfinal = min(t2,t3);
+     tfinal = t3;
+
     }
     else {
-        if (t2 >0.0) {
-          tfinal = t2;
-        }
-        else {
-          tfinal = t3;
-        }
+        tfinal = -1.;
     }
   }
   else {
-    N = vec3(0.0,0.0,0.0);
-    return N;
+    tfinal = -1.;
   }
 
     //find intersection point S on surface by plugging in t
-    vec3 S = V + tfinal * W;
+    //vec3 S = V + tfinal * W;
     //can find normalized vector from center of sphere
     //to this point
-    N = normalize(S - C);
+    //N = normalize(S - C);
 
-  return N;
+  return tfinal;
 }
 
-float phong(vec3 N) {
+float phong(vec3 N, vec3 W) {
    //float z = N.z;
    vec3 L = vec3(.5*sin(5.*uTime),1.,1.);
    float c = max(.1, dot(N, normalize(L)));
    vec3 E = -W;
-   //implementing R
    vec3 R = 2. * dot(N,L) * N - L;
-   float p = 3.;
+   float p = 1.;
    float spec = pow(max(0., dot(E, R)),p);
    c = step(0.1, N.z) * .5 * c;
    c+= spec;
    return c;
 }
 
+
+vec3 phong2(vec3 N, vec3 W, vec3 A) {
+   //ambient light, diffusemax(), specularmax()^p
+   vec3 c = A;
+   vec3 LDir = normalize(vec3(1.,-sin(uTime),.5));
+   vec3 E = -W;
+   float d = max(0., dot(N, LDir));
+   vec3 R = 2. * dot(N,LDir) * N - LDir;
+    float p = 1.;
+   float spec = pow(max(0., dot(E, R)),p);
+   c += d * vec3(.5, .5, 1.5);           // Diffuse color
+   c += spec * vec3(.5,.5,.5);            // Specular color
+   return c;
+}
+
+
 void main() {
-   vec3 N = shader();
+   //sph(v,w,c,r)
+   vec3 color;
+float c;
+   float f = 1.;
+   vec3 V = vec3(0.0, 0.0, f);
+   vec3 W = normalize(vec3(vPos.x, vPos.y, -f));
+   vec3 C = vec3(0.0,0.0,0.0);
+   float r = 2.5;
 
-   float c = phong(N);
-   vec3 color = vec3(c, c*c, c*c*c);
 
-   float z = -1000.;
-   for (int n = 0; n<2; n++) {
-      vec4 S = uS[n];
-      if (N.z>z) {
-         for (int i = 0; i< 2; i++) {
-            vec4 L = uL[i];
-
-            c+= max(0.,L.w * dot(N, normalize(L.xyz)));
-            //color = c * vec3(1.,1.,1.);
-            z = N.z;
-         }
+   vec3 Cen[3];
+   Cen[0] = vec3(-2.,0.,-5.);
+   Cen[1] = vec3(0.,0.,-5.);
+   Cen[2] = vec3(2.,0.,-5.);
+   for (int n = 0; n<3; n++) {
+      float t = shader(V,W,Cen[n],r);
+      if (t > 0.) {
+          vec3 S1 = V + t * W;
+          vec3 N1 = normalize(S1-Cen[n]);
+          /* old phong
+          float c = phong(N1, W);
+          vec3 color = vec3(c, c*c, c*c*c);
+          color = vec3(c, c*c, c*c*c);
+          */
+          //vec3 L = vec3(.5*sin(5.*uTime),1.,1.);
+          //float c = max(.1, dot(N1, normalize(L)));
+          //c = step(0., N1.z) * .5 * c;
+        // color = vec3(c, c*c, c*c*c);
+       vec3 A = vec3(02., 0.3, 0.5);
+       color = phong2(N1,W,A);
+    /*
+//new stuff
+       vec3 E = -W;
+       float p = .1;
+       vec3 LDir = normalize(vec3(1.,-sin(uTime),.5));
+       vec3 R = 2. * dot(N1,LDir) * N1 - LDir;
+       float spec = pow(max(0., dot(E, R)),p);
+       c = max(.1, dot(N1, normalize(LDir)));
+       c = step(0.1, N1.z) * .5 * c;
+       c+= spec;
+*/
       }
    }
 
-
-   gl_FragColor = vec4(sqrt(color), 0.0);
+   //using phong
+   //float c = phong(N, W);
+   //vec3 color = vec3(c, c*c, c*c*c);
+  //if (tfinal < 0.) color = vec3(0., 0., 0.);
+  gl_FragColor = vec4(sqrt(color), 0.0);
 }</script>
 
 <script id='instructions' type='text/html'><font color=#b0b0b0>
-here's an implementation of phongs equation!<br>
-i attempted to implement two spheres <br>
-with the double for loop in main() however <br>
-it didn't work and i'm not sure why <br>
-i will be stopping into office hours <br>
-this week so that i can see what's wrong <br>
-and learn how to create multiple spheres<br>
+here's an implementation of phongs equation<br>
+and multiple spheres!<br>
+i'll clean up the code soon :') <br>
 </script>
 
 <script>
