@@ -367,7 +367,7 @@ function animate(gl) {
           0,  0,         0,     1,
    ]);
   let m = new Matrix();
-  m.translate(0,0,0);
+  m.translate(-.75,0,0);
   drawSphere(m, .05, 0, 1, 1); //blue
   m.translate(.1,.5,0);
   drawSphere(m, .05, 1, 1, 1); //gray
@@ -376,9 +376,9 @@ function animate(gl) {
   drawSphere(m, .05, 1, 0, 1); //pink
 
   m.translate(0,-.5,0);
-  drawSphere(m, .05, 2, 1, 1); //pink
+  drawSphere(m, .05, 2, 1, 1); //light pink
 
-  animateB(m, time);
+  //animateB(m, time);
 
 }
 gl_start(canvas1, vs, fs);
