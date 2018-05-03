@@ -277,6 +277,8 @@ function Matrix() {
     drawBuffer(gl);
   }
 }
+
+
 function multiply(x, y){
   let temp = [];
   for (let i=0; i<16; i++) {
@@ -291,6 +293,7 @@ function multiply(x, y){
   }
   return temp;
 }
+
 function mult(m, v) {
   var x = v[0], y = v[1], z = v[2], w = v[3] === undefined ? 1 : v[3];
     // RETURN RESULT OF TRANSFORMING v BY MATRIX m.
@@ -299,16 +302,7 @@ function mult(m, v) {
              x * m[2] + y * m[6] + z * m[10] + w * m[14],
              x * m[3] + y * m[7] + z * m[11] + w * m[15] ];
 }
-// get points along the cubic curve
-let points = [];
-function drawSpline(xf, yf, dt) {
-    //let a = [xf(0), yf(0)];
-      for (let t = 0; t <= 1 ; t += dt) {
-         let b = [xf(t), yf(t)];
-         points.unshift(b);
-         //a = b;
-      }
-}
+
 // matrix mult for hermite curves
 function bezier(a, b, c, d, spec){
     let bMatrix = [-1, 3,  -3,  1,
@@ -320,28 +314,16 @@ function bezier(a, b, c, d, spec){
     let pts = mult(bMatrix, ptMatrix);
     return pts;
 }
-// points and slopes
+// points
 let a = [1,0,0]; // 00
 let b = [0,1,0]; // 11
 let c = [1,0,1]; // 01
 let d = [0,0,1]; //01
-// cubic func for x pos
-function xf(t) {
-    let coeff = bezier(a, b, c, d, 'x');
-    let res = coeff[0]*Math.pow(t,3)+coeff[1]*Math.pow(t,2)+coeff[2]*t+coeff[3];
-    return res;
-}
-// cubic func for y pos
-function yf(t) {
-    let coeff = bezier(a, b, c, d, 'y');
-    let res = coeff[0]*Math.pow(t,3)+coeff[1]*Math.pow(t,2)+coeff[2]*t+coeff[3];
-    return res;
-}
 
 function mix(a,b,t) {
     return (1-t) * a + t * b;
 }
-
+/*
 function combine(a,b,c,d,t) {
     return mix (
       mix ( mix(a,b,t) , mix(b,c,t) , t ),
@@ -349,28 +331,21 @@ function combine(a,b,c,d,t) {
       t
   );
 }
-function animateSphere(mtx, t) {
-  drawSpline(xf,yf,.02);
-  // console.log('PTS', points);
-  // mtx.save();
-  // mtx.translate(points[Number.parseInt(t % 2 * 100)][0], points[Number.parseInt(t % 2 * 100)][1], 0);
-  // drawSphere(mtx, .05, 1, 0, 0);
-  // mtx.restore();
-    // console.log('t', Number.parseInt(t % 2 * 50));
-    //console.log(points[Number.parseInt(t % 2 * 100)][0], points[Number.parseInt(t % 2 * 50)][1]);
-    for (var t = 0; t < 1; t+.2) {
+*/
+function combine(a,b,c,d,t) {
+    return (1-t) * (1-t) * (1-t) * a +
+       3 * (1-t) * (1-t) *   t   * b +
+       3 * (1-t) *   t   *   t   * c +
+             t   *   t   *   t   * d;
+}
+function animateB(mtx, t) { //use current time parameter?
+    for (var time = 0; time <= 1; time+.2) {
       mtx.save();
-      let p = combine(a,b,c,d,t)
+      let p = combine(a,b,c,d,time)
       mtx.translate(p);
-      drawSphere(mtx, .05, 0, 1, 0);
+      drawSphere(mtx, .05, 0, 2, 0);
       mtx.restore();
     }
-/*
-    mtx.save();
-    mtx.translate(points[Number.parseInt(t % 2 * 100)][0], points[Number.parseInt(t % 2 * 100)][1], 0);
-    drawSphere(mtx, .1, 1, 0, 0);
-    mtx.restore();
-*/
 }
 function drawSphere(mtx,radius,r,g,b){
   mtx.save();
@@ -392,9 +367,19 @@ function animate(gl) {
           0,  0,         0,     1,
    ]);
   let m = new Matrix();
-  animateSphere(m, time);
-  // drawSpheres(m,.4,time,.5);
-  // drawSpline(xf,yf,6);
+  m.translate(0,0,0);
+  drawSphere(m, .05, 0, 1, 1); //blue
+  m.translate(.1,.5,0);
+  drawSphere(m, .05, 1, 1, 1); //gray
+
+  m.translate(.4,0,0);
+  drawSphere(m, .05, 1, 0, 1); //pink
+
+  m.translate(0,-.5,0);
+  drawSphere(m, .05, 2, 1, 1); //pink
+
+  animateB(m, time);
+
 }
 gl_start(canvas1, vs, fs);
 </script>
