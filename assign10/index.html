@@ -42,7 +42,7 @@ void main() {
 <script id='instructions' type='text/html'><font color=#b0b0b0>
 <b>Description</b>
 <p>
-BSpline
+Hermite Spline
 </script>
 
 <script>
@@ -50,7 +50,7 @@ var vs = my_vertex_shader.innerHTML,
     fs = my_fragment_shader.innerHTML;
     fs = fs.substring(1, fs.length);
 document.body.innerHTML = [''
-   ,'<center><font size=6 color=#b0b0b0>Stephanie McAleer Homework #9</center>'
+   ,'<center><font size=6 color=#b0b0b0>Stephanie McAleer Homework #8</center>'
    ,'<TABLE cellspacing=0 cellpadding=0><TR>'
    ,'<td width=50></td><td><font color=red size=5><div id=errorMessage>&nbsp;</div></font></td>'
    ,'</TR><TR>'
@@ -277,8 +277,6 @@ function Matrix() {
     drawBuffer(gl);
   }
 }
-
-
 function multiply(x, y){
   let temp = [];
   for (let i=0; i<16; i++) {
@@ -293,7 +291,6 @@ function multiply(x, y){
   }
   return temp;
 }
-
 function mult(m, v) {
   var x = v[0], y = v[1], z = v[2], w = v[3] === undefined ? 1 : v[3];
     // RETURN RESULT OF TRANSFORMING v BY MATRIX m.
@@ -302,71 +299,107 @@ function mult(m, v) {
              x * m[2] + y * m[6] + z * m[10] + w * m[14],
              x * m[3] + y * m[7] + z * m[11] + w * m[15] ];
 }
-
+// get points along the cubic curve
+let points = [];
+function drawSpline(xf, yf, dt) {
+    //let a = [xf(0), yf(0)];
+      for (let t = 0; t <= 1 ; t += dt) {
+         let b = [xf(t), yf(t)];
+         points.unshift(b);
+         //a = b;
+      }
+}
 // matrix mult for hermite curves
-function bezier(a, b, c, d, spec){
-    let bMatrix = [-1, 3,  -3,  1,
-                  3,  -6, 3,   0,
-                   -3,  3, 0,  0,
-                   1,  0,  0,  0];
-    let ptMatrix = [a[spec], b[spec], c[spec], d[spec]];
-    //console.log(r0[spec], r1[spec]);
-    let pts = mult(bMatrix, ptMatrix);
+function hermite(p0, p1, r0, r1, spec){
+    let hMatrix = [2, -3,  0,  1,
+                  -2,  3, 0,   0,
+                   1,  -2, 1,  0,
+                   1,  -1,  0,  0];
+    let ptMatrix = [p0[spec], p1[spec], r0[spec], r1[spec]];
+    console.log(r0[spec], r1[spec]);
+    let pts = mult(hMatrix, ptMatrix);
     return pts;
 }
-// points
-let A = [-.6,.2,0]; // 00 //blue
-let B = [-.3,.8,0]; // 11 //gray
-let C = [.3,.8,0]; // 01 //pink
-let D = [.4,.2,0]; //01 //light pink
-
-function mix(a,b,t) {
-    //console.log("a:",a);
-    //console.log(a, b);
-    return [(1-t)*a[0] + t*b[0],
-            (1-t)*a[1] + t*b[1],
-            (1-t)*a[2] + t*b[2]
-        ];
-    //return (1-t) * a + t * b;
+// points and slopes
+let p0 = {x: -0.75, y:-.5}; // 00
+let p1 = {x: .75, y:.65}; // 11
+let r0 = {x: 0.25, y:1.}; // 01
+let r1 = {x: .5, y:1.}; //01
+// cubic func for x pos
+function xf(t) {
+    let coeff = hermite(p0, p1, r0, r1, 'x');
+    let res = coeff[0]*Math.pow(t,3)+coeff[1]*Math.pow(t,2)+coeff[2]*t+coeff[3];
+    return res;
 }
-
-function combine(a,b,c,d,t) {
-    //console.log(a, b, c, d, t);
-    //console.log(mix(a,b,t));
-    return mix (
-      mix ( mix(a,b,t) , mix(b,c,t) , t ),
-      mix ( mix(b,c,t) , mix(c,d,t) , t ),
-      t
-  );
-
-  //console.log(x);
+// cubic func for y pos
+function yf(t) {
+    let coeff = hermite(p0, p1, r0, r1, 'y');
+    let res = coeff[0]*Math.pow(t,3)+coeff[1]*Math.pow(t,2)+coeff[2]*t+coeff[3];
+    return res;
 }
-/*
-function combine(a,b,c,d,t) {
-    return (1-t) * (1-t) * (1-t) * a +
-       3 * (1-t) * (1-t) *   t   * b +
-       3 * (1-t) *   t   *   t   * c +
-             t   *   t   *   t   * d;
+function splineVertex(u,v) {
+    points[u]
 }
-*/
-function animateB(mtx, t) { //use current time parameter?
-      //mtx.save();
-      let m = new Matrix();
-      let p = combine(A,B,C,D,t)
-      //console.log(p);
-      //mtx.translate(p);
-      //console.log(p);
-      m.translate(p[0],p[1],p[2]);
-      drawSphere(m, 0.05, 0, 2, 0);
-      //mtx.restore();
-}
+function animateSphere(mtx, t) {
+  drawSpline(xf,yf,.02);
+  // console.log('PTS', points);
+  // mtx.save();
+  // mtx.translate(points[Number.parseInt(t % 2 * 100)][0], points[Number.parseInt(t % 2 * 100)][1], 0);
+  // drawSphere(mtx, .05, 1, 0, 0);
+  // mtx.restore();
+    // console.log('t', Number.parseInt(t % 2 * 50));
+    //console.log(points[Number.parseInt(t % 2 * 100)][0], points[Number.parseInt(t % 2 * 50)][1]);
+    for (var i = 0; i < 100; i++) {
+      mtx.save();
+      mtx.translate(points[i][0], points[i][1], 0);
+      drawSphere(mtx, .05, 0, 1, 0);
+      mtx.restore();
+    }
 
+    mtx.save();
+    mtx.translate(points[Number.parseInt(t % 2 * 100)][0], points[Number.parseInt(t % 2 * 100)][1], 0);
+    drawSphere(mtx, .1, 1, 0, 0);
+    mtx.restore();
+}
 function drawSphere(mtx,radius,r,g,b){
   mtx.save();
     mtx.scale(radius,radius,radius);
     mtx.sphere(r,g,b);
-    //mtx.translate(.5,.75,.5)
   mtx.restore();
+}
+function drawSpheres(mtx, ampl, phr, len) {
+      mtx.rotateX(Math.PI/6)
+      // the atom
+      mtx.save();
+      drawSphere(mtx, len/1.20, 0,0.9,0);
+      mtx.restore();
+      //it's protons
+      mtx.save();
+      mtx.rotateY(1.6*phr);
+      mtx.translate(len*2,0.06,0);
+      drawSphere(mtx, ampl / 6,0.9 + 0.9 * Math.sin(1.6*phr),0.5,1);
+      mtx.restore();
+      mtx.save();
+      mtx.rotateZ(1.6*phr);
+      mtx.translate(len*2,0.06,0);
+      drawSphere(mtx, ampl / 6,0.9 + 0.9 * Math.sin(1.6*phr),0.5,1);
+      mtx.restore();
+      mtx.save();
+      mtx.rotateZ(1.6*phr);
+      mtx.translate(len*2.5,0.06,0);
+      drawSphere(mtx, ampl / 6,0.9 + 0.9 * Math.sin(1.6*phr),0.5,1);
+      mtx.restore();
+      //it's neutrons
+      mtx.save();
+      mtx.rotateY(2.6*phr);
+      mtx.translate(len*2.5,0.09,0);
+      drawSphere(mtx, ampl / 5,1,0.5,0.9 + 0.9 * Math.sin(1.6*phr));
+      mtx.restore();
+      mtx.save();
+      mtx.rotateY(2.*phr);
+      mtx.translate(len*2.5,0.12,0);
+      drawSphere(mtx, ampl / 6,1,0.5,0.9 + 0.9 * Math.sin(1.6*phr));
+      mtx.restore();
 }
 function animate(gl) {
    let time = (Date.now() - startTime) / 1000;
@@ -382,58 +415,9 @@ function animate(gl) {
           0,  0,         0,     1,
    ]);
   let m = new Matrix();
-  //let a = [.5,.75,.5]; // 00
-
-//save, translate, draw restore
-
-m.save();
-m.translate(A[0],A[1],A[2]);
-drawSphere(m, .05, 0, 1, 1); //blue
-m.restore();
-
-m.save();
-m.translate(B[0],B[1],B[2]);
-drawSphere(m, .05, 1, 1, 1); //gray
-m.restore();
-
-m.save();
-m.translate(C[0],C[1],C[2]);
-drawSphere(m, .05, 1, 0, 1); //pink
-m.restore();
-
-m.save();
-m.translate(D[0],D[1],D[2]);
-drawSphere(m, .05, 2, 1, 1); //light pink
-m.restore();
-
-
-animateB(m, time%1);
-/*
-  m.translate(-.75,0,0);
-  drawSphere(m, .05, 0, 1, 1); //blue
-  m.translate(.1,.5,0);
-  drawSphere(m, .05, 1, 1, 1); //gray
-
-  m.translate(.4,0,0);
-  drawSphere(m, .05, 1, 0, 1); //pink
-
-  m.translate(0,-.5,0);
-  drawSphere(m, .05, 2, 1, 1); //light pink
-*/
-
-
-  //m.save();
- // drawSphere(m,.05,1,1,1);
-  //m.scale(.05,.05,.05);
-  //m.sphere(1,0,2);
- // m.translate(a[0],a[1],a[2]);
-  //m.restore();
-  /*
-  m.translate(b[0],b[1],b[2]);
-  m.translate(c[0],c[1],c[2]);
-  m.translate(d[0],d[1],d[2]);
-  */
-
+  animateSphere(m, time);
+  // drawSpheres(m,.4,time,.5);
+  // drawSpline(xf,yf,6);
 }
 gl_start(canvas1, vs, fs);
 </script>
